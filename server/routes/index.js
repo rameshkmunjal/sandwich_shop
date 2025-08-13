@@ -4,21 +4,24 @@ const router=express.Router();
 /* including files */
 //import {createUser, getAllUsers} from '../controllers/userController.js';
 import {
-    createItemInfo,
+    createItem,
     getItemById,
     getItemInfoList,
     deleteItemInfo
 } from '../controllers/itemController.js';
 import {
-    createInventory,    
+    createInventory,  
+    addInventory, 
+    releaseInventory,
     getInventoryList, 
-    getItemReleaseDetails,
-    
+    getItemReleaseDetails,     
+    getItemReleaseSummary,    
     getInventoryItemSummary,
     getInventoryCategorySummary,
     deleteInventory,
     editInventory, 
-    getInventoryById
+    getInventoryById,
+
 } from '../controllers/inventoryController.js';
 import {    
     getPurchasesList,
@@ -28,34 +31,42 @@ import {
 } from '../controllers/purchaseController.js';
 import { createSalesTransaction, deleteSales } from '../controllers/salesController.js';
 import { getSalesList , getMonthlySalesList, getSalesById} from '../controllers/salesController.js';
+import { createTransaction,  getTransactionList, getTransactionById, deleteTransaction, getList, updateAccounts} from '../controllers/transactionController.js';
 
 /* GET */
+router.get('/bank/list', getList);
 router.get('/item/list', getItemInfoList);
 router.get('/item/:id', getItemById);
 router.get('/inventory/list', getInventoryList);
 router.get('/inventory/item/summary/:category', getInventoryItemSummary);
 router.get('/inventory/category/summary', getInventoryCategorySummary);
-router.get('/item/release/details/:id', getItemReleaseDetails);
-//(`${baseUrl}/item/release/details/${id}`)
+router.get('/item/release/list/:month/:year', getItemReleaseDetails);
+router.get('/item/release/summary/:month/:year', getItemReleaseSummary);
+//${baseUrl}/item/release/list
 router.get('/purchases/list', getPurchasesList);
 router.get('/purchases/list/:month', getMonthlyPurchaseList);
-
+router.get('/transaction/list', getTransactionList);
+router.get('/transaction/:id', getTransactionById);
 router.get('/sales/list', getSalesList);
 router.get('/sales/list/:month', getMonthlySalesList);
 router.get('/sales/:id', getSalesById);
 router.get('/inventory/:id', getInventoryById);
 /* POST */
-router.post('/item/create', createItemInfo);
+router.post('/item/create', createItem);
 router.post('/inventory/create', createInventory);
-router.post('/purchase/create', createPurchase);
+router.post('/create/purchase/:id', createPurchase);
+router.post('/inventory/add', addInventory);
+router.post('/inventory/release', releaseInventory);
 
 router.post('/sales/create', createSalesTransaction);
+router.post('/transaction/create', createTransaction);
+router.post('/transaction/update/accounts', updateAccounts);
 
 
 
 router.put('/inventory/edit/:id', editInventory);
-//router.put('/item/edit/:_id', editItem);
 /* DELETE */
+router.delete('/transaction/delete/:id', deleteTransaction);
 router.delete('/item/delete/:id', deleteItemInfo);
 router.delete('/inventory/delete/:id', deleteInventory);
 router.delete('/purchase/delete/:id', deletePurchase);

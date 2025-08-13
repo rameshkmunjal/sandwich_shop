@@ -3,10 +3,10 @@ const Schema = mongoose.Schema;
 
 const itemSchema=new Schema({
     id:{type:String, default:''} ,//name of item
-    category:{type:String, default:''}, //GR , PK, CD , SP, FF etc
-    itemName:{type:String, default:''} ,//name of item
-    desc:{type:String, default:''} ,//weight of item    
-    unit:{type:String, default:''} , //GM, LT etc        
+    itemCode:{type:String, default:'' },
+    itemName:{type:String, default:'' },
+    category:{type:String, default:''}, //GR , PK, CD , SP, FF etc  
+    flag:{type:Boolean, default:false}     
 })
 
 //GRINATTA500GM - category, trans_nature, brand, description1, description2, meas_unit

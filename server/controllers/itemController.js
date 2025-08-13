@@ -1,27 +1,14 @@
 import ItemModel from '../schema/item.js';
-import {
-    unitLetterCodes,
-    unitDigitCodes
-} from '../JsonData/data.js';
-import {sortList, getItem, make5LettersStr} from './itemFunctions.js';
+import shortId from 'shortid';
 
-export const createItemInfo=async(req, res)=>{
-    //console.log("createItemInfo called");
-    const {name, desc, unit} = req.body;
-    console.log("payload inside req body :", req.body);    
+import {sortList} from './itemFunctions.js';
 
-    const item=getItem(name);
-    console.log("line no. 25  : " , item);
-    
-    const itemName=item.name;
-    const category=item.category;
-    const unitCode=unitDigitCodes[unitLetterCodes.indexOf(unit)];
-
-    let meas=make5LettersStr(desc);
-    const id=item.code+""+meas+""+unitCode;
-    console.log(id);
+export const createItem=async(req, res)=>{
+    const {itemCode, itemName, category} = req.body;
+    console.log("payload inside req body :", itemCode, itemName, category); 
+    const id=shortId.generate();
       
-    const i = await ItemModel.create({id, itemName, category, desc, unit});
+    const i = await ItemModel.create({id, itemCode, itemName, category});
     
     
 
@@ -29,10 +16,9 @@ export const createItemInfo=async(req, res)=>{
         console.log(i);
         res.status(201).json({
             id:i.id,
+            itemCode:i.itemCode,
             itemName:i.itemName,
-            category:i.category,
-            desc:i.desc,
-            unit:i.unit
+            category:i.category
         })
     } else {
         res.status(400).json({message:"Invalid Item data"});
@@ -43,7 +29,7 @@ export const createItemInfo=async(req, res)=>{
 /* GET API to get item info list */
 export const getItemInfoList=async(req, res)=>{
     const itemList=await ItemModel.find();
-    console.log(itemList);
+    //console.log(itemList);
     if(itemList){
         res.json(sortList(itemList));
     } else {
@@ -51,6 +37,7 @@ export const getItemInfoList=async(req, res)=>{
         throw new Error('itemList Not Found');
     }
 }
+
 
 
 /* DELETE API related functions */
@@ -104,7 +91,7 @@ export const editItem = async (req, res) => {
 */
 
 export const getItemById = async (req, res) =>{    
-      const item = await ItemModel.findOne({ _id: req.params.id });      
+      const item = await ItemModel.findOne({ 'id': req.params.id });      
         if (item) {
           res.json(item)
         } else {
@@ -112,8 +99,6 @@ export const getItemById = async (req, res) =>{
           throw new Error('Item not found')
         }
     }
-
-
 
 
 

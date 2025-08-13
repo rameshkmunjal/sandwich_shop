@@ -1,63 +1,22 @@
 import shortId from 'shortid';
 
 import InventoryModel from '../schema/inventory.js';
-import PurchaseModel from '../schema/purchase.js';
-
-import {
-    getCategories,
-    getCategoryTotal,
-    getItemTotal,
-    getUniqueItems,
-    getNewArr,
-    arrangeReleaseItemsAndDates
+import { 
+  getCategorySummary, 
+  getReleaseMasterData,
+  addStatusToInventoryList,
+  getCategoryTotal,
+  getGroupTotal,
+  sortListOnDay,
+  summarizeItemCodes,
+  getReleaseItemsAmountTotal,
+  getFilteredData
 } from './inventoryFunctions.js';
-import {sortList} from './itemFunctions.js';
-
-import { itemCatArr} from '../JsonData/data.js';
-
-
-export const createInventory=async(req, res)=>{
-    //console.log("createInventory called");
-    //console.log("payload inside req body :", req.body.itemId);
-    const item = await PurchaseModel.findOne({'id':req.body.itemId }); 
-   // console.log('item inside createInventory', item)
-    
-    const {itemId, itemName, cat, qty, amount }=item;
-    const id=shortId.generate();
-    const remainingStock=0;
-    const i = await InventoryModel.create({
-        id,         
-        itemId,         
-        itemName, 
-        cat,        
-        qty,
-        amount,
-        remainingStock      
-    })
-    //itemName, cat, unit to be derived from itemModel
-    //console.log("OBJECT CREATED OUT OF PAYLOAD" , i);
-
-    if (i) {
-        //console.log(i);
-        res.status(201).json({
-        id: i.id,
-        itemId:i.itemId, 
-        cat:i.cat,
-        itemName:i.itemName, 
-        qty:i.qty,
-        amount:i.amount,
-        remainingStock:i.remainingStock
-        })
-    } else {
-        res.status(400).json({message:"Inventory creation data problem happened"});
-        throw new Error('Invalid inventory data')
-    }
-}
-
+import {sortList, make5LettersStr} from './itemFunctions.js';
 
 /* DELETE API related functions */
 export const deleteInventory= async (req, res) => {
-    const inventory = await InventoryModel.findOne({ id: req.params.id })
+    const inventory = await InventoryModel.findOne({ 'id': req.params.id })
   
     if (inventory) {
       await inventory.deleteOne()
@@ -67,6 +26,257 @@ export const deleteInventory= async (req, res) => {
       throw new Error('inventory not found')
     }
 }
+
+export const getInventoryList=async(req, res)=>{
+    const inventoryList = await InventoryModel.find().lean();
+    const gt=getGroupTotal(inventoryList);
+    const list=addStatusToInventoryList(inventoryList);
+    //console.log("List: ", list);
+    if(list){
+        res.json({gt:gt, inventoryList:sortList(list)});
+    } else {
+        res.status(404);
+        throw new Error('inventoryList Not Found');
+    }
+}
+
+export const getInventoryItemSummary=async(req, res)=>{
+    //console.log("req params : " , req.params);
+    
+    const list=await InventoryModel.find({'category':req.params.category}).lean();
+    const gt=getGroupTotal(list);
+    //console.log(list);
+    if(list){
+      res.json({gt:gt, inventoryList:sortList(list)});
+    } else {
+            res.status(404);
+            throw new Error('inventoryList Not Found');
+    }           
+}
+
+
+export const getInventoryCategorySummary=async(req, res)=>{
+    const list=await InventoryModel.find();
+    //console.log(list);
+
+    
+    let newArr=getCategorySummary(list);
+    let gt=getCategoryTotal(newArr);
+    //console.log("line 194 :", newArr);
+    if(newArr){
+        res.json({summary:newArr, gt:gt});
+    } else {
+        res.status(404);
+        throw new Error('inventoryList Not Found');
+    }
+}
+
+export const getInventoryById = async (req, res) =>{ 
+  //console.log("params inside getInventoryById", req.params._id);   
+    const inventory = await InventoryModel.findOne({ id: req.params.id });      
+      if (inventory) {
+        res.json(inventory)
+      } else {
+        res.status(404)
+        throw new Error('Inventory not found')
+      }
+  }
+
+  // @desc    Edit an item
+// @route   PUT /item/:itemId
+// @access  
+export const editInventory = async (req, res) => {
+    //console.log("payload editInventory axios call", req.body);
+    
+    const {  
+        id,      
+        itemId, 
+        itemName, 
+        category,
+        cql,        
+        currentQty,
+        unitPrice         
+    } = req.body
+    let currentValue=Number(currentQty)*Number(unitPrice);
+    const i = await InventoryModel.findOne({'id':id});
+    
+  
+  //console.log(i);
+    if (i) {
+        i.id=id, 
+        i.itemId=itemId, 
+        i.itemName=itemName, 
+        i.category=category,        
+        i.currentQty=Number(currentQty),
+        i.currentValue=currentValue,
+        i.cql=Number(cql),   
+        i.unitPrice=Number(unitPrice);
+  
+        const updatedInventory = await i.save();
+        //console.log("updatedInventory....", updatedInventory);
+        res.json(updatedInventory);
+    } else {
+      res.status(404)
+      throw new Error('record not found')
+    }
+  }
+
+
+export const getItemReleaseDetails=async(req, res)=>{  
+  
+    const list = await InventoryModel.find().lean();
+    //console.log(list);
+    const masterData=getReleaseMasterData(list);
+    const revisedList=sortListOnDay(getFilteredData(masterData, req.params.month, req.params.year));
+    const gt=getReleaseItemsAmountTotal(revisedList);
+
+    if (revisedList) {
+        res.json({revisedList: revisedList, gt:gt});
+    } else {
+      res.status(404)
+      throw new Error('record not found')
+    }        
+}
+
+export const createInventory=async(req, res)=>{    
+    const {
+        date, itemCode, itemName,unitDesc,  
+        category,  quantity, cql, unitPrice 
+      }=req.body;
+    //console.log(date);
+    const id=shortId.generate();
+    const addId=shortId.generate();
+    const inventoryList=await InventoryModel.find();
+    const itemId=itemCode+make5LettersStr(unitDesc);
+
+    const exists = inventoryList.findIndex(i => i.itemId === itemId) !== -1;
+
+    if(exists){
+      res.json({message:"item id already exists. use add stock to add further."})
+    }
+
+    let amount=Number(quantity)*Number(unitPrice);
+    
+    
+    const inventoryItem = new InventoryModel({
+        id: id,
+        itemId: itemId,
+        itemName: itemName,
+        category:category,
+        currentQty: quantity,
+        cql:cql,
+        unitPrice:unitPrice,
+        currentValue: amount,
+        addition: [
+          {
+            addId: addId,
+            quantity: quantity,
+            amount: amount,
+            date:date
+          }
+        ],
+        releases: [] // empty initially
+      });
+    
+      try {
+        const result = await inventoryItem.save();
+        //console.log('New Inventory Saved:', result);
+        res.json(result);
+      } catch (err) {
+        //console.error('Error:', err.message);
+        throw new Error('Inventory could not be created');
+      }
+}
+
+
+export const addInventory = async (req, res) => {
+  const {id, quantity }=req.body;
+  const item=await InventoryModel.findOne({'id':id});
+  const amount=Number(quantity)*Number(item.unitPrice);
+  const addId=shortId.generate();
+  const additionEntry = {
+      addId:addId,
+      quantity: quantity,
+      amount: amount,
+      date:Date.now()
+  };
+
+  try {
+    const updated = await InventoryModel.findOneAndUpdate(
+      { id: id },
+      {
+        $push: { addition: additionEntry },
+        $inc: {
+          currentQty: additionEntry.quantity,
+          currentValue: additionEntry.amount
+        }
+      },
+      { new: true }
+    );
+
+    //console.log('Stock Added:', updated);
+    res.json(updated);
+  } catch (err) {
+    //console.error('Error adding stock:', err.message);
+    res.json({error:err.message});
+  }
+};
+
+export const releaseInventory = async (req, res) => {
+  const {id,  quantity}=req.body;
+  const item=await InventoryModel.findOne({'id':id});
+  const amount=Number(quantity)*Number(item.unitPrice);
+
+  const releaseId=shortId.generate();
+
+  const releaseEntry = {
+    releaseId:releaseId,
+    quantity: quantity,
+    amount: amount,
+    date:Date.now(),
+    releasedTo: 'Kitchen',
+    releasedBy: 'Madhur'
+  };
+
+  try {
+    const updated = await InventoryModel.findOneAndUpdate(
+      { id: id },
+      {
+        $push: { releases: releaseEntry },
+        $inc: {
+          currentQty: -releaseEntry.quantity,
+          currentValue: -releaseEntry.amount
+        }
+      },
+      { new: true }
+    );
+
+    //console.log('Stock Released:', updated);
+    res.json(updated);
+  } catch (err) {
+    //console.error('Error releasing stock:', err.message);
+    res.json({message:'Error releasing stock'})
+  }
+};
+
+export const getItemReleaseSummary=async(req,res)=>{
+    const list = await InventoryModel.find().lean();
+    //console.log(list);
+    const masterData=getReleaseMasterData(list);
+    const resultObj=summarizeItemCodes(getFilteredData(masterData, req.params.month, req.params.year));
+
+      if(resultObj){
+        console.log('Stock Released Summary:', resultObj);
+        res.json(resultObj);
+      } else {
+        //console.error('Error releasing stock:', err.message);
+        res.json({message:'data could not be fetched'})
+      }
+
+}
+
+
+
 
 
 /*
@@ -82,117 +292,13 @@ function changeDateFormat(d){
     return newDate;
 }
     */
-export const getInventoryList=async(req, res)=>{
-    const inventoryList=await InventoryModel.find();
-    //console.log(inventoryList);
-    
-    let newArr=getNewArr(inventoryList);
-    //console.log(newArr);
-    if(newArr){
-        res.json(sortList(newArr));
-    } else {
-        res.status(404);
-        throw new Error('inventoryList Not Found');
-    }
-}
-
-export const getInventoryItemSummary=async(req, res)=>{
-    console.log("req params : " , req.params);
-    
-    const list=await InventoryModel.find({'category':req.params.category});
-    console.log(list);
-    if(list){
-            res.json(list);
-    } else {
-            res.status(404);
-            throw new Error('inventoryList Not Found');
-    }           
-}
 
 
-export const getInventoryCategorySummary=async(req, res)=>{
-    const list=await InventoryModel.find();
-    //console.log(list);
 
-    const newList=getCategories(itemCatArr, list);
-    //console.log("line 191 : ", newList);
-    
-    let newArr=getCategoryTotal(newList);
-    console.log("line 194 :", newArr);
-    if(newArr){
-        res.json(newArr);
-    } else {
-        res.status(404);
-        throw new Error('inventoryList Not Found');
-    }
-}
+/*
 
-export const getInventoryById = async (req, res) =>{    
-    const inventory = await InventoryModel.findOne({ id: req.params.id });      
-      if (inventory) {
-        res.json(inventory)
-      } else {
-        res.status(404)
-        throw new Error('Item not found')
-      }
-  }
-
-  // @desc    Edit an item
-// @route   PUT /item/:itemId
-// @access  
-export const editInventory = async (req, res) => {
-    console.log("payload editInventory axios call", req.body);
-    const {  
-        id,      
-        itemId, 
-        itemName, 
-        cat,        
-        qty,
-        amount , 
-        remainingStock,
-        releaseCount,
-        relDate 
-    } = req.body
-  
-    const i = await InventoryModel.findOne({'id':id});
-    let str1=i.stockReleased.length > 0 ? i.stockReleased+'-'+releaseCount : releaseCount;
-    let str2=i.rlDates.length > 0 ? i.rlDates+'-'+relDate : relDate;
-  
-  console.log(i);
-    if (i) { 
-        i.itemId=itemId, 
-        i.itemName=itemName, 
-        i.cat=cat,        
-        i.qty=qty,
-        i.amount=amount, 
-        i.remainingStock=Number(remainingStock)-Number(releaseCount),
-        i.stockReleased=str1;
-        i.rlDates=str2;   
-  
-        const updatedInventory = await i.save();
-        console.log("updatedInventory....", updatedInventory);
-        res.json(updatedInventory);
-    } else {
-      res.status(404)
-      throw new Error('record not found')
-    }
-  }
-
-
-export const getItemReleaseDetails=async(req, res)=>{
-    console.log(req.params);    
-    const i = await InventoryModel.findOne({'id':req.params.id});
-    console.log(i);
-    if (i) { 
-        let stockReleasedArr=i.stockReleased.split('-');
-        let releaseDatesArr=i.rlDates.split('-');
-        console.log(stockReleasedArr, releaseDatesArr);
-        let arr=arrangeReleaseItemsAndDates(stockReleasedArr, releaseDatesArr);
-
-        res.json({itemId:i.itemId, itemName:i.itemName, remainingStock:i.remainingStock, releaseArr:arr});
-    } else {
-      res.status(404)
-      throw new Error('record not found')
-    }        
-}
-
+   arr[5].releases[0].itemId="90100000";
+   arr[5].releases[0].itemName="Potato Patkha";
+   arr[5].releases[0].category="Products";
+   return arr[5].releases;
+   */

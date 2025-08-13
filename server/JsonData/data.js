@@ -34,11 +34,11 @@ export const itemCatArr=[
     {category:"grocery", name:"Tea Powder", code:'118'},
     {category:"grocery", name:"White Peas", code:'119'},
     {category:"grocery", name:"Groundnut", code:'120'},
-    {category:"grocery", name:"Kesar", code:'121'},
-    {category:"grocery", name:"Sugar Buru", code:'122'},    
+    {category:"grocery", name:"Kesar", code:'121'},  
     {category:"grocery", name:"khajoor", code:'123'},
     {category:"grocery", name:"raita boondi", code:'124'},
     {category:"grocery", name:"zero sev", code:'125'},
+    {category:"grocery", name:"breadcrumbs", code:'126'},
 //spices
     {category:"spices", name:"turmeric powder", code:'201'},
     {category:"spices", name:"salt", code:'202'},
@@ -61,9 +61,11 @@ export const itemCatArr=[
     {category:"spices", name:"sabut jeera", code:'219'},
     {category:"spices", name:"ginger powder", code:'220'},
     {category:"spices", name:"jeera powder", code:'221'},
-    {category:"spices", name:"black pepper powder", code:'222'},
+    {category:"spices", name:"mustard seeds", code:'222'},
     {category:"spices", name:"hing", code:'223'},
     {category:"spices", name:"methi dana", code:'224'},
+    {category:"spices", name:"saunf", code:'225'},    
+    {category:"spices", name:"black pepper corn", code:'226'},
 
     //sauces and syrups
     {category:"sauces", name:"chocolate syrup", code:'301'},
@@ -71,6 +73,7 @@ export const itemCatArr=[
     {category:"sauces", name:"mustard sauce", code:'303'},
     {category:"sauces", name:"schezwan sauce", code:'304'},
     {category:"sauces", name:"eggless mayo", code:'305'},
+    {category:"sauces", name:"caramel syrup", code:'306'},
 
     //frozen food
     {category:"frozen", name:"vanilla ice cream", code:'401'},
@@ -89,6 +92,10 @@ export const itemCatArr=[
     {category:"frozen", name:"cheese slice", code:'414'},
     {category:"frozen", name:"butter", code:'415'},
     {category:"frozen", name:"choco lava pack of 9", code:'416'},
+    {category:"frozen", name:"paneer", code:'417'},
+    {category:"frozen", name:"triple chocolate mousse", code:'418'},
+    {category:"frozen", name:"onion ring", code:'419'},
+    {category:"frozen", name:"cheese corn cigar roll", code:'420'},
     
 
     //packaging materials
@@ -113,7 +120,28 @@ export const itemCatArr=[
     {category:"packaging", name:"paper plate big", code:'519'},
     {category:"packaging", name:"paper plate small", code:'520'},
     {category:"packaging", name:"meal box 750 ml", code:'521'},
-    {category:"packaging", name:"boat tray 750 ml", code:'522'},   
+    {category:"packaging", name:"boat tray 750 ml", code:'522'},
+    {category:"packaging", name:"butter paper", code:'523'},
+    {category:"packaging", name:"roll box printed", code:'524'},
+    
+    {category:"expenses", name:"salary", code:'701'},
+    {category:"expenses", name:"rent", code:'702'},
+    {category:"expenses", name:"electricity", code:'703'},
+    {category:"expenses", name:"fuel", code:'704'},
+    {category:"expenses", name:"cartage", code:'705'},
+    {category:"expenses", name:"cleansing", code:'706'},
+    {category:"expenses", name:"maintenance", code:'707'},
+    {category:"expenses", name:"telephone", code:'708'},
+    {category:"expenses", name:"misc", code:'709'},
+    {category:"expenses", name:"taxes", code:'710'},
+    {category:"expenses", name:"stationery", code:'711'},
+    {category:"expenses", name:"repairs", code:'712'},
+    {category:"expenses", name:"kitchenware", code:'713'},
+    {category:"expenses", name:"xxxxxx", code:'714'},
+    {category:"expenses", name:"yyyyyy", code:'715'},
+
+
+    {category:"sales", name:"sales", code:'999'},
 
 
 ]
